@@ -1,0 +1,9 @@
+# Loads every dashboard JSON file in grafana/dashboards, and re-checks them every 5 seconds.
+apiVersion: 1
+
+providers:
+  - name: observability-shop
+    type: file
+    updateIntervalSeconds: 5
+    options:
+      path: $GRAFANA_DASHBOARDS

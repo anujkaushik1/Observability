@@ -10,7 +10,8 @@
     "start:catalog": "node services/catalog/index.js",
     "start:inventory": "node services/inventory/index.js",
     "start:payment": "node services/payment/index.js",
-    "prometheus": "prometheus --config.file=prometheus.yml --storage.tsdb.path=prometheus-data"
+    "prometheus": "prometheus --config.file=prometheus.yml --storage.tsdb.path=prometheus-data",
+    "grafana": "sh grafana/start.sh"
   },
   "dependencies": {
     "express": "^5.1.0",
