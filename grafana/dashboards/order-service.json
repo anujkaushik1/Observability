@@ -2,7 +2,7 @@
   "uid": "order-service",
   "title": "Order Service",
   "schemaVersion": 41,
-  "version": 11,
+  "version": 12,
   "editable": true,
   "refresh": "5s",
   "time": {
@@ -221,13 +221,17 @@
         "defaults": {
           "unit": "short",
           "decimals": 0,
-          "min": 0
+          "min": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
         },
         "overrides": []
       },
       "options": {
         "orientation": "horizontal",
-        "displayMode": "gradient",
+        "displayMode": "basic",
         "showUnfilled": true,
         "valueMode": "color",
         "reduceOptions": {
@@ -378,9 +382,9 @@
           "custom": {
             "thresholdsStyle": {
               "mode": "dashed"
-            }
-          },
-          "softMax": 10
+            },
+            "axisSoftMax": 10
+          }
         },
         "overrides": []
       },
