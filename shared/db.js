@@ -3,11 +3,11 @@ const { Pool } = require('pg');
 
 const DATABASE_URL = process.env.DATABASE_URL || 'postgres://localhost:5432/shop';
 
-let pool;
+// Opens connections only when a query needs one (up to 10), so creating it here is cheap.
+const pool = new Pool({ connectionString: DATABASE_URL });
 
 function query(text, params) {
-  if (!pool) pool = new Pool({ connectionString: DATABASE_URL });
   return pool.query(text, params);
 }
 
-module.exports = { query, DATABASE_URL };
+module.exports = { pool, query, DATABASE_URL };
