@@ -1,6 +1,5 @@
 // Order service: the entry point. Orchestrates catalog -> inventory -> payment, then saves the order.
 const express = require('express');
-const client = require('prom-client');
 const db = require('../../shared/db');
 
 const PORT = process.env.PORT || 3000;
@@ -9,31 +8,7 @@ const INVENTORY_URL = process.env.INVENTORY_URL || 'http://localhost:3002';
 const PAYMENT_URL = process.env.PAYMENT_URL || 'http://localhost:3003';
 
 const app = express();
-
-// Counts every finished request, e.g. http_requests_total{method="POST",route="/checkout",status="201"} 5
-const httpRequestsTotal = new client.Counter({
-  name: 'http_requests_total',
-  help: 'Total number of HTTP requests',
-  labelNames: ['method', 'route', 'status'],
-});
-
-app.use((req, res, next) => {
-  res.on('finish', () => {
-    httpRequestsTotal.inc({
-      method: req.method,
-      // Use the route pattern, not the raw URL, so labels stay a small fixed set.
-      route: req.route ? req.route.path : 'unmatched',
-      status: String(res.statusCode),
-    });
-  });
-  next();
-});
-
-// GET /metrics  ->  all metrics in Prometheus text format
-app.get('/metrics', async (req, res) => {
-  res.set('Content-Type', client.register.contentType);
-  res.send(await client.register.metrics());
-});
+app.use(express.json());
 
 // Calls another service and returns { status, body }. Throws if the service is unreachable.
 async function callService(url, options = {}) {
@@ -46,7 +21,7 @@ async function callService(url, options = {}) {
 }
 
 // POST /checkout { productId, quantity }  ->  201 { orderId, status, amountCents }
-app.post('/checkout', express.json(), async (req, res) => {
+app.post('/checkout', async (req, res) => {
   // Step 1. Check the request is valid.
   const { productId, quantity } = req.body ?? {};
   if (!Number.isInteger(productId) || !Number.isInteger(quantity) || quantity <= 0) {
