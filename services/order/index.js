@@ -17,6 +17,16 @@ const httpRequestsTotal = new client.Counter({
   labelNames: ["method", "route", "status"],
 });
 
+// How long each request took. Every request lands in each bucket it fits:
+// le="0.1" counts requests that took <= 0.1s, le="0.3" those <= 0.3s, and so on.
+// Also keeps _sum (total seconds) and _count (number of requests).
+const httpRequestDuration = new client.Histogram({
+  name: "http_request_duration_seconds",
+  help: "How long HTTP requests take, in seconds",
+  labelNames: ["route"],
+  buckets: [0.1, 0.3, 1, 2],
+});
+
 // PostgreSQL connection pool, right now. Gauges, not counters, because these go up and down.
 // Each one is read fresh from the pool every time /metrics is scraped.
 function poolGauge(name, help, read) {
@@ -78,13 +88,17 @@ app.use((req, res, next) => {
   // Don't count Prometheus scraping /metrics, only real traffic.
   if (req.path === "/metrics") return next();
 
+  const stopTimer = httpRequestDuration.startTimer(); // starts the clock now
+
   res.on("finish", () => {
+    // Use the route pattern, not the raw URL, so labels stay a small fixed set.
+    const route = req.route ? req.route.path : "unmatched";
     httpRequestsTotal.inc({
       method: req.method,
-      // Use the route pattern, not the raw URL, so labels stay a small fixed set.
-      route: req.route ? req.route.path : "unmatched",
+      route,
       status: String(res.statusCode),
     });
+    stopTimer({ route }); // stops the clock and puts the time in the right buckets
   });
   next();
 });
