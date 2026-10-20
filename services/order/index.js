@@ -1,5 +1,6 @@
 // Order service: the entry point. Orchestrates catalog -> inventory -> payment, then saves the order.
 const express = require('express');
+const client = require('prom-client');
 const db = require('../../shared/db');
 
 const PORT = process.env.PORT || 3000;
@@ -8,7 +9,34 @@ const INVENTORY_URL = process.env.INVENTORY_URL || 'http://localhost:3002';
 const PAYMENT_URL = process.env.PAYMENT_URL || 'http://localhost:3003';
 
 const app = express();
-app.use(express.json());
+
+// Counts every finished request, e.g. http_requests_total{method="POST",route="/checkout",status="201"} 
+const httpRequestsTotal = new client.Counter({
+  name: 'kaushik',
+  help: 'Total number of HTTP requests',
+  labelNames: ['method', 'route', 'status'],
+
+});
+
+
+
+app.use((req, res, next) => {
+  res.on('finish', () => {
+    httpRequestsTotal.inc({
+      method: req.method,
+      // Use the route pattern, not the raw URL, so labels stay a small fixed set.
+      route: req.route ? req.route.path : 'unmatched',
+      status: String(res.statusCode),
+    });
+  });
+  next();
+});
+
+// GET /metrics  ->  all metrics in Prometheus text format
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', client.register.contentType);
+  res.send(await client.register.metrics());
+});
 
 // Calls another service and returns { status, body }. Throws if the service is unreachable.
 async function callService(url, options = {}) {
@@ -21,7 +49,7 @@ async function callService(url, options = {}) {
 }
 
 // POST /checkout { productId, quantity }  ->  201 { orderId, status, amountCents }
-app.post('/checkout', async (req, res) => {
+app.post('/checkout', express.json(), async (req, res) => {
   // Step 1. Check the request is valid.
   const { productId, quantity } = req.body ?? {};
   if (!Number.isInteger(productId) || !Number.isInteger(quantity) || quantity <= 0) {
@@ -37,13 +65,16 @@ app.post('/checkout', async (req, res) => {
     return res.status(502).json({ error: 'catalog lookup failed' });
   }
 
-  // Step 3. Ask inventory if there is enough stock.
-  const stock = await callService(`${INVENTORY_URL}/inventory/${productId}`);
-  if (stock.status !== 200) {
-    return res.status(502).json({ error: 'inventory check failed' });
+  // Step 3. Ask inventory to reserve the stock. This decreases it, or fails with 409 if there isn't enough.
+  const stock = await callService(`${INVENTORY_URL}/inventory/reserve`, {
+    method: 'POST',
+    body: { productId, quantity },
+  });
+  if (stock.status === 409) {
+    return res.status(409).json(stock.body);
   }
-  if (stock.body.available < quantity) {
-    return res.status(409).json({ error: 'not enough stock', available: stock.body.available });
+  if (stock.status !== 200) {
+    return res.status(502).json({ error: 'inventory reservation failed' });
   }
 
   // Step 4. Work out the total.

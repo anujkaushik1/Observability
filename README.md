@@ -12,12 +12,12 @@ Four tiny Express services and a local Postgres database: a playground for learn
                           │  order service :3000  │
                           └───────────┬───────────┘
         ┌─────────────────────────────┼─────────────────────────────┐
-   1. price?                     2. in stock?                  3. charge
+   1. price?                     2. reserve                    3. charge
         ▼                             ▼                             ▼
 ┌─────────────────┐       ┌───────────────────────┐       ┌───────────────────┐
 │ catalog  :3001  │       │  inventory  :3002     │       │  payment  :3003   │
-│ GET /products/  │       │  GET /inventory/      │       │  POST /payments   │
-│     :id         │       │      :productId       │       │  (fake, ~200ms)   │
+│ GET /products/  │       │  POST /inventory/     │       │  POST /payments   │
+│     :id         │       │      reserve          │       │  (fake, ~200ms)   │
 └────────┬────────┘       └───────────┬───────────┘       └───────────────────┘
          │                            │
          ▼                            ▼                   4. order service saves
@@ -29,7 +29,7 @@ Four tiny Express services and a local Postgres database: a playground for learn
 |-----------|------|----------------------------|-------------|
 | order     | 3000 | `POST /checkout`           | `orders`    |
 | catalog   | 3001 | `GET /products/:id`        | `products`  |
-| inventory | 3002 | `GET /inventory/:productId`| `inventory` |
+| inventory | 3002 | `POST /inventory/reserve`  | `inventory` |
 | payment   | 3003 | `POST /payments`           | none (simulated) |
 
 Each service reads and writes only its own table. Services talk to each other over HTTP only.
@@ -56,6 +56,12 @@ curl -X POST localhost:3000/checkout -H 'content-type: application/json' \
 
 # See the saved order
 psql -d shop -c 'select * from orders;'
+
+# See stock go down after each checkout
+psql -d shop -c 'select * from inventory;'
+
+# Restock a product (e.g. USB-C Hub back to 5)
+psql -d shop -c 'update inventory set quantity = 5 where product_id = 3;'
 ```
 
 Seed products:
@@ -79,7 +85,9 @@ Failure cases worth trying:
 
 ## Known simplifications (milestone 1)
 
-- Inventory is only **checked**, never decremented, so stock never runs out.
+- Each checkout decreases stock; once it hits 0, checkout returns 409. Stock is checked and
+  decreased in one SQL statement, so two buyers can never both get the last unit.
+- Stock is not given back if payment or saving the order fails after it was reserved.
 - Payment always succeeds after a short random delay.
 - When a downstream service is down, the order service logs `TypeError: fetch failed` and nothing
   says *which* service failed. Observability will fix that.
