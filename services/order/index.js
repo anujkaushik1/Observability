@@ -119,8 +119,13 @@ async function callService(url, options = {}) {
   return { status: res.status, body: await res.json() };
 }
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 // POST /checkout { productId, quantity }  ->  201 { orderId, status, amountCents }
 app.post("/checkout", express.json(), async (req, res) => {
+  // Demo only: wait a random 0-2 seconds so request times spread across the histogram buckets.
+  await sleep(Math.random() * 2000);
+
   // Step 1. Check the request is valid.
   const { productId, quantity } = req.body ?? {};
   if (
