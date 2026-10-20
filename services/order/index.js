@@ -10,6 +10,10 @@ const PAYMENT_URL = process.env.PAYMENT_URL || "http://localhost:3003";
 
 const app = express();
 
+// Built-in Node.js process metrics: CPU, memory, event loop lag, garbage collection, and more.
+// client.register is the default registry, the one GET /metrics prints.
+client.collectDefaultMetrics({ register: client.register });
+
 // Counts every finished request, e.g. http_requests_total{method="POST",route="/checkout",status="201"}
 const httpRequestsTotal = new client.Counter({
   name: "http_requests_total",
