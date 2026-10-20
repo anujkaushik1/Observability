@@ -1,0 +1,10 @@
+# Prometheus config: which /metrics endpoints to read (scrape), and how often.
+
+global:
+  scrape_interval: 3s # read every target's /metrics every 3 seconds
+
+scrape_configs:
+  - job_name: order # becomes the label job="order" on every metric from this target
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["localhost:3000"]

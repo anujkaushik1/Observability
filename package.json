@@ -9,7 +9,8 @@
     "start:order": "node services/order/index.js",
     "start:catalog": "node services/catalog/index.js",
     "start:inventory": "node services/inventory/index.js",
-    "start:payment": "node services/payment/index.js"
+    "start:payment": "node services/payment/index.js",
+    "prometheus": "prometheus --config.file=prometheus.yml --storage.tsdb.path=prometheus-data"
   },
   "dependencies": {
     "express": "^5.1.0",
