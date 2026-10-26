@@ -1,4 +1,5 @@
 // Inventory service: knows how many units of each product are in stock.
+require('../../shared/tracing')('inventory'); // must stay first: starts tracing before express and pg load
 const express = require('express');
 const db = require('../../shared/db');
 

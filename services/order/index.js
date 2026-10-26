@@ -1,4 +1,5 @@
 // Order service: the entry point. Orchestrates catalog -> inventory -> payment, then saves the order.
+require("../../shared/tracing")("order"); // must stay first: starts tracing before express and pg load
 const express = require("express");
 const client = require("prom-client");
 const db = require("../../shared/db");

@@ -1,4 +1,5 @@
 // Payment service: pretends to charge a card. No real money, no database.
+require('../../shared/tracing')('payment'); // must stay first: starts tracing before express and pg load
 const crypto = require('crypto');
 const express = require('express');
 

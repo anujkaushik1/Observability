@@ -5,21 +5,29 @@
   "description": "Four tiny Express services (order, catalog, inventory, payment) for learning observability",
   "scripts": {
     "db:setup": "node db/setup.js",
-    "start": "concurrently -n order,catalog,inventory,payment -c blue,green,yellow,magenta \"node services/order/index.js\" \"node services/catalog/index.js\" \"node services/inventory/index.js\" \"node services/payment/index.js\"",
-    "start:order": "node services/order/index.js",
-    "start:catalog": "node services/catalog/index.js",
-    "start:inventory": "node services/inventory/index.js",
-    "start:payment": "node services/payment/index.js",
+    "start": "concurrently -n order,catalog,inventory,payment -c blue,green,yellow,magenta \"nodemon --watch services/order --watch shared services/order/index.js\" \"nodemon --watch services/catalog --watch shared services/catalog/index.js\" \"nodemon --watch services/inventory --watch shared services/inventory/index.js\" \"nodemon --watch services/payment --watch shared services/payment/index.js\"",
+    "start:order": "nodemon --watch services/order --watch shared services/order/index.js",
+    "start:catalog": "nodemon --watch services/catalog --watch shared services/catalog/index.js",
+    "start:inventory": "nodemon --watch services/inventory --watch shared services/inventory/index.js",
+    "start:payment": "nodemon --watch services/payment --watch shared services/payment/index.js",
     "prometheus": "prometheus --config.file=prometheus.yml --storage.tsdb.path=prometheus-data",
     "grafana": "sh grafana/start.sh",
     "jaeger": "jaeger/bin/jaeger --config jaeger/config.yaml"
   },
   "dependencies": {
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.223.0",
+    "@opentelemetry/instrumentation-express": "^0.71.1",
+    "@opentelemetry/instrumentation-http": "^0.223.0",
+    "@opentelemetry/instrumentation-pg": "^0.76.0",
+    "@opentelemetry/instrumentation-undici": "^0.33.0",
+    "@opentelemetry/sdk-node": "^0.223.0",
     "express": "^5.1.0",
     "pg": "^8.16.0",
     "prom-client": "^15.1.3"
   },
   "devDependencies": {
-    "concurrently": "^9.2.0"
+    "concurrently": "^9.2.0",
+    "nodemon": "^3.1.14"
   }
 }

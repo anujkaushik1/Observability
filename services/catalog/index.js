@@ -1,4 +1,5 @@
 // Catalog service: knows what products exist and what they cost.
+require('../../shared/tracing')('catalog'); // must stay first: starts tracing before express and pg load
 const express = require('express');
 const db = require('../../shared/db');
 
