@@ -9,7 +9,6 @@ const app = express();
 
 // GET /products/:id  ->  200 { id, name, priceCents }  |  404
 app.get('/products/:id', async (req, res) => {
-  // Demo only: wait 10 seconds so the slow step stands out in Jaeger.
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) {
     return res.status(400).json({ error: 'product id must be an integer' });
