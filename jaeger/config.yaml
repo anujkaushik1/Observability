@@ -1,5 +1,6 @@
 # Jaeger v2 config: receives traces over OTLP and keeps them in memory.
-# Trimmed down from the official all-in-one example (cmd/jaeger/config.yaml, v2.22.0).
+# Trimmed down from the official all-in-one example (cmd/jaeger/config.yaml).
+# Runs on Jaeger v2.20.0: v2.21+ removed the old /api/traces search that Grafana's Jaeger plugin still uses.
 # In-memory storage: traces are lost when Jaeger stops.
 
 service:
