@@ -29,7 +29,7 @@ const httpRequestDuration = new client.Histogram({
   name: "http_request_duration_seconds",
   help: "How long HTTP requests take, in seconds",
   labelNames: ["route"],
-  buckets: [0.1, 0.3, 1, 2],
+  buckets: [0.1, 0.3, 1, 2, 5, 10, 15, 20],
 });
 
 // PostgreSQL connection pool, right now. Gauges, not counters, because these go up and down.

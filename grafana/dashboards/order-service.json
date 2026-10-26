@@ -2,7 +2,7 @@
   "uid": "order-service",
   "title": "Order Service",
   "schemaVersion": 41,
-  "version": 12,
+  "version": 13,
   "editable": true,
   "refresh": "5s",
   "time": {
@@ -56,7 +56,7 @@
       "id": 2,
       "type": "timeseries",
       "title": "Request duration (p50 / p95 / p99)",
-      "description": "p95 = 95% of checkouts finished within this time. Worked out from the histogram buckets, so it can never show more than the last bucket (2s).",
+      "description": "p95 = 95% of checkouts finished within this time. Worked out from the histogram buckets, so it can never show more than the last bucket (20s).",
       "gridPos": {
         "x": 12,
         "y": 0,
@@ -121,7 +121,7 @@
         "x": 0,
         "y": 8,
         "w": 12,
-        "h": 8
+        "h": 13
       },
       "targets": [
         {
@@ -158,12 +158,12 @@
       "id": 4,
       "type": "bargauge",
       "title": "Requests per bucket (in the selected time range)",
-      "description": "Same idea as the _bucket lines in /metrics: how many checkouts finished within 0.1s, 0.3s, 1s, 2s, and in total. Each bar includes the bars above it. Note: Prometheus 3 stores the bucket labels 1 and 2 as 1.0 and 2.0, so the queries use those.",
+      "description": "Same idea as the _bucket lines in /metrics: how many checkouts finished within 0.1s, 0.3s, 1s, 2s, 5s, 10s, 15s, 20s, and in total. Each bar includes the bars above it. Note: Prometheus 3 stores whole-number bucket labels (1, 2, 5, 10, 15, 20) as 1.0, 2.0, 5.0 and so on, so the queries use those.",
       "gridPos": {
         "x": 12,
         "y": 8,
         "w": 12,
-        "h": 8
+        "h": 13
       },
       "targets": [
         {
@@ -208,6 +208,46 @@
         },
         {
           "refId": "E",
+          "instant": true,
+          "expr": "sum(increase(http_request_duration_seconds_bucket{job=\"order\",le=\"5.0\"}[$__range]))",
+          "legendFormat": "within 5s",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        },
+        {
+          "refId": "F",
+          "instant": true,
+          "expr": "sum(increase(http_request_duration_seconds_bucket{job=\"order\",le=\"10.0\"}[$__range]))",
+          "legendFormat": "within 10s",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        },
+        {
+          "refId": "G",
+          "instant": true,
+          "expr": "sum(increase(http_request_duration_seconds_bucket{job=\"order\",le=\"15.0\"}[$__range]))",
+          "legendFormat": "within 15s",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        },
+        {
+          "refId": "H",
+          "instant": true,
+          "expr": "sum(increase(http_request_duration_seconds_bucket{job=\"order\",le=\"20.0\"}[$__range]))",
+          "legendFormat": "within 20s",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          }
+        },
+        {
+          "refId": "I",
           "instant": true,
           "expr": "sum(increase(http_request_duration_seconds_bucket{job=\"order\",le=\"+Inf\"}[$__range]))",
           "legendFormat": "all requests",
@@ -254,7 +294,7 @@
       "description": "active = running a query now, idle = open but unused. The red dashed line is the pool limit (10). When active reaches it, new queries have to wait.",
       "gridPos": {
         "x": 0,
-        "y": 16,
+        "y": 21,
         "w": 12,
         "h": 8
       },
@@ -342,7 +382,7 @@
       "description": "Queries waiting in line because all 10 pool connections are busy. Should stay at 0; the red dashed line marks 1.",
       "gridPos": {
         "x": 12,
-        "y": 16,
+        "y": 21,
         "w": 12,
         "h": 8
       },
@@ -409,7 +449,7 @@
       "description": "How busy the order service process keeps the CPU. 100% = one full CPU core. From collectDefaultMetrics (process_cpu_seconds_total).",
       "gridPos": {
         "x": 0,
-        "y": 24,
+        "y": 29,
         "w": 8,
         "h": 8
       },
@@ -452,7 +492,7 @@
       "description": "total = all memory the process holds (resident set). heap used = memory used by JavaScript objects. A line that only ever climbs can mean a memory leak.",
       "gridPos": {
         "x": 8,
-        "y": 24,
+        "y": 29,
         "w": 8,
         "h": 8
       },
@@ -504,7 +544,7 @@
       "description": "Node.js runs JavaScript on one loop. Lag = how long work waits for that loop to be free. A few milliseconds is normal; high lag means something is blocking the loop. Note: our sleep() does NOT block it, it just waits.",
       "gridPos": {
         "x": 16,
-        "y": 24,
+        "y": 29,
         "w": 8,
         "h": 8
       },
