@@ -11,7 +11,8 @@
     "start:inventory": "node services/inventory/index.js",
     "start:payment": "node services/payment/index.js",
     "prometheus": "prometheus --config.file=prometheus.yml --storage.tsdb.path=prometheus-data",
-    "grafana": "sh grafana/start.sh"
+    "grafana": "sh grafana/start.sh",
+    "jaeger": "jaeger/bin/jaeger --config jaeger/config.yaml"
   },
   "dependencies": {
     "express": "^5.1.0",

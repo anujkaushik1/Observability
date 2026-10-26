@@ -1,0 +1,9 @@
+# Tells Grafana where Jaeger is, so traces can be viewed in Grafana too. Loaded when Grafana starts.
+apiVersion: 1
+
+datasources:
+  - name: Jaeger
+    uid: jaeger
+    type: jaeger
+    access: proxy
+    url: http://localhost:16686

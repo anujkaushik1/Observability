@@ -4,3 +4,4 @@ node_modules/
 *.log
 prometheus-data/
 grafana-data/
+jaeger/bin/
