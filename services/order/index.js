@@ -1,5 +1,6 @@
 // Order service: the entry point. Orchestrates catalog -> inventory -> payment, then saves the order.
 require("../../shared/tracing")("order"); // must stay first: starts tracing before express and pg load
+const { recordError } = require("../../shared/tracing");
 const express = require("express");
 const client = require("prom-client");
 const db = require("../../shared/db");
@@ -191,6 +192,7 @@ app.post("/checkout", express.json(), async (req, res) => {
 
 app.use((err, req, res, next) => {
   console.error(err);
+  recordError(err); // shows the error message and stack trace in Jaeger
   res
     .status(err.status || 500)
     .json({ error: err.expose ? err.message : "internal error" });

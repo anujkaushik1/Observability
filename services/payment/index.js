@@ -1,5 +1,6 @@
 // Payment service: pretends to charge a card. No real money, no database.
 require('../../shared/tracing')('payment'); // must stay first: starts tracing before express and pg load
+const { recordError } = require('../../shared/tracing');
 const crypto = require('crypto');
 const express = require('express');
 
@@ -24,6 +25,7 @@ app.post('/payments', async (req, res) => {
 
 app.use((err, req, res, next) => {
   console.error(err);
+  recordError(err); // shows the error message and stack trace in Jaeger
   res.status(err.status || 500).json({ error: err.expose ? err.message : 'internal error' });
 });
 

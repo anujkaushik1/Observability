@@ -1,5 +1,6 @@
 // Catalog service: knows what products exist and what they cost.
 require('../../shared/tracing')('catalog'); // must stay first: starts tracing before express and pg load
+const { recordError } = require('../../shared/tracing');
 const express = require('express');
 const db = require('../../shared/db');
 
@@ -25,6 +26,7 @@ app.get('/products/:id', async (req, res) => {
 
 app.use((err, req, res, next) => {
   console.error(err);
+  recordError(err); // shows the error message and stack trace in Jaeger
   res.status(err.status || 500).json({ error: err.expose ? err.message : 'internal error' });
 });
 
