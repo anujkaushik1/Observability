@@ -1,0 +1,22 @@
+# Where alerts are sent: Grafana calls the alerts service (a "webhook"), which saves each alert
+# in the alerts table in Postgres. Sent when an alert fires, and again when it resolves.
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: alerts-table
+    receivers:
+      - uid: alerts-table
+        type: webhook
+        settings:
+          url: http://localhost:3004/alerts
+          httpMethod: POST
+        disableResolveMessage: false # also send when the problem is fixed
+
+policies:
+  - orgId: 1
+    receiver: alerts-table # every alert goes to the alerts table
+    group_by: ["alertname"]
+    group_wait: 10s # wait a moment to group alerts that fire together
+    group_interval: 1m
+    repeat_interval: 4h # if it stays down, send again every 4 hours

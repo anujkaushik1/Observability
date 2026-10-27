@@ -25,6 +25,21 @@ CREATE TABLE IF NOT EXISTS orders (
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Owned by: alerts service. One row each time Grafana sends an alert (when it fires, and when it resolves).
+CREATE TABLE IF NOT EXISTS alerts (
+  id          BIGSERIAL   PRIMARY KEY,
+  received_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  status      TEXT        NOT NULL, -- 'firing' or 'resolved'
+  alert_name  TEXT        NOT NULL, -- e.g. 'Order service is down'
+  severity    TEXT,                 -- e.g. 'critical'
+  summary     TEXT,
+  description TEXT,
+  started_at  TIMESTAMPTZ,          -- when the problem began
+  ended_at    TIMESTAMPTZ,          -- when it was fixed (empty while still firing)
+  fingerprint TEXT,                 -- Grafana's ID for this alert, the same on its firing and resolved rows
+  details     JSONB                 -- everything Grafana sent about this alert, just in case
+);
+
 -- Seed data (safe to re-run)
 INSERT INTO products (id, name, price_cents) VALUES
   (1, 'Mechanical Keyboard', 4999),

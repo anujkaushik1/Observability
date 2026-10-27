@@ -1,0 +1,48 @@
+# Alert: the order service has been unreachable for 1 minute.
+# Prometheus sets up{job="order"} to 1 when it can read http://localhost:3000/metrics, and 0 when it can't.
+# Grafana checks it every 10 seconds; if it stays below 1 for 1 minute, the alert fires and an email goes out.
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: services
+    folder: Alerts
+    interval: 10s # how often Grafana checks
+    rules:
+      - uid: order-down
+        title: Order service is down
+        condition: C
+        data:
+          # A: ask Prometheus for the current value of up for the order service
+          - refId: A
+            relativeTimeRange: { from: 60, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              expr: up{job="order"}
+              instant: true
+          # B: take the latest value
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              refId: B
+              type: reduce
+              expression: A
+              reducer: last
+          # C: is it below 1? (0 = down)
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              refId: C
+              type: threshold
+              expression: B
+              conditions:
+                - evaluator: { type: lt, params: [1] }
+        for: 1m # must stay down this long before the alert fires
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: critical
+        annotations:
+          summary: Order service is down
+          description: Prometheus has not been able to reach the order service (http://localhost:3000/metrics) for over 1 minute.

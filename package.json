@@ -5,11 +5,12 @@
   "description": "Four tiny Express services (order, catalog, inventory, payment) for learning observability",
   "scripts": {
     "db:setup": "node db/setup.js",
-    "start": "concurrently -n order,catalog,inventory,payment -c blue,green,yellow,magenta \"nodemon --watch services/order --watch shared services/order/index.js\" \"nodemon --watch services/catalog --watch shared services/catalog/index.js\" \"nodemon --watch services/inventory --watch shared services/inventory/index.js\" \"nodemon --watch services/payment --watch shared services/payment/index.js\"",
+    "start": "concurrently -n order,catalog,inventory,payment,alerts -c blue,green,yellow,magenta,cyan \"nodemon --watch services/order --watch shared services/order/index.js\" \"nodemon --watch services/catalog --watch shared services/catalog/index.js\" \"nodemon --watch services/inventory --watch shared services/inventory/index.js\" \"nodemon --watch services/payment --watch shared services/payment/index.js\" \"nodemon --watch services/alerts --watch shared services/alerts/index.js\"",
     "start:order": "nodemon --watch services/order --watch shared services/order/index.js",
     "start:catalog": "nodemon --watch services/catalog --watch shared services/catalog/index.js",
     "start:inventory": "nodemon --watch services/inventory --watch shared services/inventory/index.js",
     "start:payment": "nodemon --watch services/payment --watch shared services/payment/index.js",
+    "start:alerts": "nodemon --watch services/alerts --watch shared services/alerts/index.js",
     "prometheus": "prometheus --config.file=prometheus.yml --storage.tsdb.path=prometheus-data",
     "grafana": "sh grafana/start.sh",
     "jaeger": "jaeger/bin/jaeger --config jaeger/config.yaml",
