@@ -8,11 +8,14 @@ datasources:
     access: proxy
     url: http://localhost:3100
     jsonData:
-      # Turns each log line's trace_id into a link that opens the same request's trace in Jaeger.
+      # Turns each log line's trace_id into a link that opens the trace in Grafana's Jaeger view, in a new tab.
+      # It's a normal web address (no datasourceUid), so Grafana opens it in a new tab. The address is a Grafana
+      # Explore page, URL-encoded. Decoded, the panes part reads:
+      #   {"trace":{"datasource":"jaeger","queries":[{"refId":"A","datasource":{"type":"jaeger","uid":"jaeger"},
+      #     "query":"<trace id>"}],"range":{"from":"now-1h","to":"now"}}}
       derivedFields:
         - name: TraceID
           matcherType: label # trace_id is stored next to the log line, not inside its text
           matcherRegex: trace_id
-          datasourceUid: jaeger
-          url: "$${__value.raw}" # $$ = a literal $ in Grafana config files
-          urlDisplayLabel: Open trace in Jaeger
+          url: "http://localhost:3030/explore?schemaVersion=1&orgId=1&panes=%7B%22trace%22%3A%7B%22datasource%22%3A%22jaeger%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22jaeger%22%2C%22uid%22%3A%22jaeger%22%7D%2C%22query%22%3A%22$${__value.raw}%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22now-1h%22%2C%22to%22%3A%22now%22%7D%7D%7D" # $$ = a literal $ in Grafana config files
+          urlDisplayLabel: Open trace in Grafana (new tab)
