@@ -6,3 +6,5 @@ prometheus-data/
 grafana-data/
 jaeger/bin/
 loki-data/
+logs/
+alloy-data/

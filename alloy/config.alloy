@@ -1,0 +1,53 @@
+// Grafana Alloy config: reads the services' log files and sends each new line to Loki.
+// Started with `npm run alloy` from the project root, so the paths below are relative to it.
+
+// 1. Find the log files (logs/order.2026-10-28.1.log, ...). A new day's file is noticed within 5 seconds.
+local.file_match "service_logs" {
+  path_targets = [{"__path__" = "logs/*.log"}]
+  sync_period  = "5s"
+}
+
+// 2. Read new lines as they are added. Alloy remembers how far it has read in each file
+//    (in alloy-data/), so no line is sent twice, even after a restart.
+loki.source.file "service_logs" {
+  targets    = local.file_match.service_logs.targets
+  forward_to = [loki.process.service_logs.receiver]
+}
+
+// 3. Each line is JSON written by pino. Pull out the fields Loki and Grafana need.
+loki.process "service_logs" {
+  stage.json {
+    expressions = {
+      service  = "service",
+      time     = "time",
+      trace_id = "traceId",
+      span_id  = "spanId",
+    }
+  }
+
+  // Label to filter by in Grafana, e.g. {service_name="order"}. Labels should be few, fixed values.
+  stage.labels {
+    values = {service_name = "service"}
+  }
+
+  // Stored next to each line rather than as a label, because every request has a new value.
+  // Grafana uses trace_id to link a log line to its trace in Jaeger.
+  stage.structured_metadata {
+    values = {trace_id = "", span_id = ""}
+  }
+
+  // Use the time pino wrote the line, not the time Alloy happened to read it.
+  stage.timestamp {
+    source = "time"
+    format = "RFC3339"
+  }
+
+  forward_to = [loki.write.local.receiver]
+}
+
+// 4. Send the lines to Loki.
+loki.write "local" {
+  endpoint {
+    url = "http://localhost:3100/loki/api/v1/push"
+  }
+}
