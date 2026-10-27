@@ -1,0 +1,18 @@
+# Tells Grafana where Loki is, so logs can be searched in Explore. Loaded when Grafana starts.
+apiVersion: 1
+
+datasources:
+  - name: Loki
+    uid: loki
+    type: loki
+    access: proxy
+    url: http://localhost:3100
+    jsonData:
+      # Turns each log line's trace_id into a link that opens the same request's trace in Jaeger.
+      derivedFields:
+        - name: TraceID
+          matcherType: label # trace_id is stored next to the log line, not inside its text
+          matcherRegex: trace_id
+          datasourceUid: jaeger
+          url: "$${__value.raw}" # $$ = a literal $ in Grafana config files
+          urlDisplayLabel: Open trace in Jaeger

@@ -8,7 +8,7 @@ export GF_SERVER_HTTP_PORT=3030           # 3000 is taken by the order service
 export GF_AUTH_ANONYMOUS_ENABLED=true     # no login screen, fine for local learning
 export GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
 export GF_ANALYTICS_REPORTING_ENABLED=false
-export GF_PLUGINS_PREINSTALL_SYNC=prometheus,jaeger  # Grafana 13 downloads these plugins; get them before starting
+export GF_PLUGINS_PREINSTALL_SYNC=prometheus,jaeger,loki  # Grafana 13 downloads these plugins; get them before starting
 export GF_FEATURE_TOGGLES_ENABLE=jaegerEnableGrpcEndpoint  # use Jaeger's newer /api/v3 where the plugin supports it
 
 # Where Grafana keeps its own files (git-ignored), and where it reads our setup from.

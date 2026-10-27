@@ -1,6 +1,7 @@
 // Order service: the entry point. Orchestrates catalog -> inventory -> payment, then saves the order.
 require("../../shared/tracing")("order"); // must stay first: starts tracing before express and pg load
 const { recordError } = require("../../shared/tracing");
+const log = require("../../shared/logger")("order");
 const express = require("express");
 const client = require("prom-client");
 const db = require("../../shared/db");
@@ -134,23 +135,33 @@ app.post("/checkout", express.json(), async (req, res) => {
 
   // Step 1. Check the request is valid.
   const { productId, quantity } = req.body ?? {};
+  log.info({ productId, quantity }, "Checkout started");
+
+  // Logs why the checkout failed, then sends the error reply.
+  const fail = (status, body, reason) => {
+    log.warn({ productId, quantity, status, reason }, "Checkout failed");
+    return res.status(status).json(body);
+  };
+
   if (
     !Number.isInteger(productId) ||
     !Number.isInteger(quantity) ||
     quantity <= 0
   ) {
-    return res
-      .status(400)
-      .json({ error: "productId and quantity must be integers, quantity > 0" });
+    return fail(
+      400,
+      { error: "productId and quantity must be integers, quantity > 0" },
+      "invalid input",
+    );
   }
 
   // Step 2. Ask catalog for the product and its price.
   const product = await callService(`${CATALOG_URL}/products/${productId}`);
   if (product.status === 404) {
-    return res.status(404).json(product.body);
+    return fail(404, product.body, "product not found");
   }
   if (product.status !== 200) {
-    return res.status(502).json({ error: "catalog lookup failed" });
+    return fail(502, { error: "catalog lookup failed" }, "catalog lookup failed");
   }
 
   // Step 3. Ask inventory to reserve the stock. This decreases it, or fails with 409 if there isn't enough.
@@ -159,10 +170,10 @@ app.post("/checkout", express.json(), async (req, res) => {
     body: { productId, quantity },
   });
   if (stock.status === 409) {
-    return res.status(409).json(stock.body);
+    return fail(409, stock.body, "not enough stock");
   }
   if (stock.status !== 200) {
-    return res.status(502).json({ error: "inventory reservation failed" });
+    return fail(502, { error: "inventory reservation failed" }, "inventory reservation failed");
   }
 
   // Step 4. Work out the total.
@@ -174,7 +185,7 @@ app.post("/checkout", express.json(), async (req, res) => {
     body: { amountCents },
   });
   if (payment.status !== 201 || payment.body.status !== "succeeded") {
-    return res.status(402).json({ error: "payment failed" });
+    return fail(402, { error: "payment failed" }, "payment failed");
   }
 
   // Step 6. Save the order, then reply with its id.
@@ -185,17 +196,21 @@ app.post("/checkout", express.json(), async (req, res) => {
     [productId, quantity, amountCents, payment.body.paymentId],
   );
 
+  log.info(
+    { orderId: rows[0].id, productId, quantity, amountCents },
+    "Checkout completed",
+  );
   res
     .status(201)
     .json({ orderId: rows[0].id, status: rows[0].status, amountCents });
 });
 
 app.use((err, req, res, next) => {
-  console.error(err);
+  log.error({ err, path: req.path }, "Request failed with an unexpected error");
   recordError(err); // shows the error message and stack trace in Jaeger
   res
     .status(err.status || 500)
     .json({ error: err.expose ? err.message : "internal error" });
 });
 
-app.listen(PORT, () => console.log(`order service listening on :${PORT}`));
+app.listen(PORT, () => log.info({ port: PORT }, "Order service started"));

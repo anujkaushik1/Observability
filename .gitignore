@@ -5,3 +5,4 @@ node_modules/
 prometheus-data/
 grafana-data/
 jaeger/bin/
+loki-data/

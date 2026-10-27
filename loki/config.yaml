@@ -1,0 +1,57 @@
+# Loki config: stores log lines on disk and answers log searches from Grafana.
+# Trimmed down from Homebrew's sample (loki-local-config.yaml, Loki 3.7.9).
+# Logs arrive from the services through OpenTelemetry at http://localhost:3100/otlp/v1/logs.
+
+auth_enabled: false # one user, no login (fine for local learning)
+
+server:
+  http_listen_address: 127.0.0.1 # only reachable from this machine
+  http_listen_port: 3100 # Grafana searches and services send logs here
+  grpc_listen_address: 127.0.0.1
+  grpc_listen_port: 9096
+  log_level: warn
+
+common:
+  instance_addr: 127.0.0.1
+  path_prefix: loki-data # git-ignored folder in the project
+  storage:
+    filesystem:
+      chunks_directory: loki-data/chunks # the log lines themselves, compressed
+      rules_directory: loki-data/rules
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+schema_config:
+  configs:
+    - from: 2024-01-01
+      store: tsdb # the index: which labels exist and where their log lines are
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h # one index file per day
+
+limits_config:
+  retention_period: 168h # keep logs for 7 days
+
+compactor:
+  working_directory: loki-data/compactor
+  retention_enabled: true # actually delete logs older than retention_period
+  delete_request_store: filesystem
+
+query_range:
+  results_cache:
+    cache:
+      embedded_cache:
+        enabled: true
+        max_size_mb: 100
+
+pattern_ingester:
+  enabled: true # groups similar log lines; used by Grafana's Logs Drilldown page
+  metric_aggregation:
+    loki_address: localhost:3100
+
+analytics:
+  reporting_enabled: false # don't send usage stats to Grafana Labs
